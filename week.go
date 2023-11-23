@@ -3,37 +3,33 @@ package main
 import (
 	"flag"
 	"fmt"
-	"os"
 	"time"
 )
-
-const day = 24 * time.Hour
 
 func main() {
 	short := flag.Bool("s", false, "Non-verbose output.")
 	flag.Parse()
-
 	now := time.Now()
-	y := now.Year()
-	date0 := time.Date(y, 1, 1, 1, 0, 0, 0, time.Local)
-	i := 0
-	for date0.Weekday() == time.Saturday || date0.Weekday() == time.Sunday {
-		date0 = date0.Add(day)
-		i++
+	dayOfYear := now.YearDay()
+	offset := startWeekendDaysOfYear(now.Year())
+	dayOfYear -= offset
+	weeks := (dayOfYear / 7) + 1
+	if *short {
+		fmt.Println(weeks)
+	} else {
+		fmt.Printf("day %v of week %v (%v)\n", dayOfYear, weeks, now.Weekday())
 	}
-	for ; i < 365; i++ {
-		d := date0.Add(day * time.Duration(i))
-		weekday := i/7 + 1
-		if now.Before(d) {
-			if *short {
-				fmt.Println(weekday)
-			} else {
-				fmt.Printf("day %v of week %v (%v)\n", i+1, weekday, d.Weekday())
-			}
+}
 
-			return
-		}
+func startWeekendDaysOfYear(y int) int {
+	day0 := time.Date(y, 1, 1, 1, 0, 0, 0, time.Local)
+	// Return number of weekend days at start of year.
+	switch day0.Weekday() {
+	case time.Saturday:
+		return 2
+	case time.Sunday:
+		return 1
+	default:
+		return 0
 	}
-	fmt.Println("failed with bad day of year")
-	os.Exit(1)
 }
